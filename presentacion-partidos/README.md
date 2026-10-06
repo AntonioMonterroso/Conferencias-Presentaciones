@@ -21,3 +21,7 @@ El presentador ve la diapositiva actual, la siguiente, notas, reloj con ritmo (a
 
 ## Contenido editable en Supabase
 Ver `../supabase/README.md`. Con `enabled: false` en `config.js` todo funciona con el contenido incluido (sin internet).
+
+## Editor con inicio de sesión
+`editor.html` permite editar título, minutos, notas, HTML, clases y publicación de cada diapositiva y página del libro, con vista previa e historial de versiones.
+Entra con un usuario de Supabase Auth que esté en `mdpp_editors` (ver `../supabase/README.md`). La sesión vive solo en la pestaña.
