@@ -22,7 +22,7 @@ const bool = b => (b ? 'true' : 'false');
 
 /* ---------- presentación ---------- */
 global.window = {};
-for (const f of ['slides-1', 'slides-2', 'slides-3', 'slides-4']) {
+for (const f of ['slides-1', 'slides-1b', 'slides-2', 'slides-3', 'slides-4']) {
   new Function('window', fs.readFileSync(path.join(ROOT, 'presentacion-partidos', 'js', f + '.js'), 'utf8'))(global.window);
 }
 const SL = window.SLIDES, SECS = window.SECTIONS;
@@ -161,6 +161,68 @@ ${phases.map(p => `-- >>>>>>>>>> ${p}\n` + strip(fs.readFileSync(path.join(OUT, 
 commit;
 `;
 fs.writeFileSync(path.join(OUT, `${STAMP}_00_completa.sql`), full);
+/* ---------- migración incremental 07: inscripción de un partido ----------
+   Para quien YA ejecutó las fases 1 a 6. Si reinicia de cero no la necesita (la 00 ya la incluye). */
+const NEW_SLIDE_TITLES = (() => { const w = {}; new Function('window', fs.readFileSync(path.join(ROOT, 'presentacion-partidos', 'js', 'slides-1b.js'), 'utf8'))(Object.assign(w, { SLIDES: [], H: window.H })); return w.SLIDES.map(s => s.t); })();
+const newSlideSlugs = new Set(NEW_SLIDE_TITLES.map(slugOf));
+const newBookSlugs = new Set(['inscripcion1', 'inscripcion2']);
+const CHANGED_BOOK = ['presentacion', 'indice', 'fin-publico', 'notas'];
+function incremental(deckSlug, rows, newSet, changed) {
+  const fresh = rows.filter(r => newSet.has(r.slug));
+  if (!fresh.length) return '';
+  const first = fresh[0];
+  const vals = fresh.map(r => `  (${r.pos}, ${r.sec == null ? 'null' : r.sec}, ${lit(r.slug)}, ${lit(r.title)}, ${num(r.minutes)}, ${lit(r.css)}, ${bool(r.nochrome)}, ${lit(r.html)}, ${lit(r.notes)}, ${lit(r.meta)}, ${bool(r.locked)})`).join(',\n');
+  const upd = rows.filter(r => changed.includes(r.slug)).map(r => `update public.mdpp_items i set html = ${lit(r.html)} from public.mdpp_decks d where d.id = i.deck_id and d.slug = ${lit(deckSlug)} and i.slug = ${lit(r.slug)} and i.updated_at = i.created_at;`).join('\n');
+  const mins = rows.map(r => `  (${lit(r.slug)}, ${num(r.minutes)})`).join(',\n');
+  return `
+-- ===== ${deckSlug}: ${fresh.length} filas nuevas =====
+do $$
+declare d uuid;
+begin
+  select id into d from public.mdpp_decks where slug = ${lit(deckSlug)};
+  if d is null then raise exception 'No existe el deck ${deckSlug}. Ejecute antes las fases 1 a 6.'; end if;
+  -- Hace espacio en el orden solo la primera vez (si la fila nueva ya existe, no mueve nada)
+  if not exists (select 1 from public.mdpp_items where deck_id = d and slug = ${lit(first.slug)}) then
+    update public.mdpp_items set pos = pos + ${fresh.length} where deck_id = d and pos >= ${first.pos};
+  end if;
+end $$;
+
+insert into public.mdpp_items (deck_id, section_id, pos, slug, title, minutes, css_class, nochrome, html, notes, meta, locked)
+select d.id,
+       (select s.id from public.mdpp_sections s where s.deck_id = d.id and s.pos = v.sec_pos),
+       v.pos, v.slug, v.title, v.minutes, v.css, v.nochrome, v.html, v.notes, v.meta::jsonb, v.locked
+from public.mdpp_decks d,
+(values
+${vals}
+) as v(pos, sec_pos, slug, title, minutes, css, nochrome, html, notes, meta, locked)
+where d.slug = ${lit(deckSlug)}
+on conflict (deck_id, slug) do nothing;
+${upd ? '\n-- Páginas existentes cuyo texto cambió (solo si usted no las ha editado)\n' + upd + '\n' : ''}
+-- Minutos sugeridos recalculados (solo filas que usted no ha editado)
+update public.mdpp_items i set minutes = v.m
+from public.mdpp_decks d,
+(values
+${mins}
+) as v(slug, m)
+where d.id = i.deck_id and d.slug = ${lit(deckSlug)} and i.slug = v.slug and i.updated_at = i.created_at;
+`;
+}
+const inc = `-- =====================================================================
+-- FASE 7 (incremental) · INSCRIPCIÓN DE UN PARTIDO: ${[...newSlideSlugs].length} diapositivas y ${newBookSlugs.size} páginas del libro
+-- Úsela SOLO si ya ejecutó las fases 1 a 6 antes de agregar este contenido.
+-- Si reinicia de cero con 99_reset + 00_completa, NO la necesita (ya está incluido).
+-- Idempotente: no duplica ni pisa lo que usted haya editado.
+-- =====================================================================
+begin;
+-- Las actualizaciones de texto y minutos de filas NO editadas no deben contar como ediciones ni crear historial
+alter table public.mdpp_items disable trigger mdpp_items_snapshot;
+${incremental('presentacion-partidos', slideRows, newSlideSlugs, [])}
+${incremental('libro-partidos', bookRows, newBookSlugs, CHANGED_BOOK)}
+alter table public.mdpp_items enable trigger mdpp_items_snapshot;
+commit;
+`;
+fs.writeFileSync(path.join(OUT, `${STAMP}_07_agregar_inscripcion.sql`), inc);
+
 console.log('Libro:', bookRows.length, 'páginas ·', bookSections.length, 'secciones · bloqueadas:', bookRows.filter(r => r.locked).length);
 console.log('Presentación:', slideRows.length, 'diapositivas ·', SECS.length, 'secciones · bloqueadas:', slideRows.filter(r => r.locked).length);
 console.log('Archivos:', fs.readdirSync(OUT).map(f => f + ' ' + Math.round(fs.statSync(path.join(OUT, f)).size / 1024) + ' KB').join(' | '));

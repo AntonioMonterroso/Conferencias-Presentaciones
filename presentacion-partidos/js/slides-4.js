@@ -269,7 +269,7 @@
       <div class="kick a" style="--d:1000ms;margin-top:30px">Preguntas y conversación</div>`,
     notes: `<p>Agradezca y abra espacio de preguntas. Ofrezca entregar el libro interactivo y la lista de cumplimiento como material de seguimiento.</p>` });
 
-  /* Ajusta los tiempos sugeridos para que la sesión sume 90 minutos, conservando el peso relativo de cada lámina. */
-  const total = S.reduce((a, s) => a + (s.m == null ? 1 : s.m), 0), k = 90 / total;
+  /* Ajusta los tiempos sugeridos para que la sesión sume 100 minutos, conservando el peso relativo de cada lámina. */
+  const total = S.reduce((a, s) => a + (s.m == null ? 1 : s.m), 0), k = 100 / total;
   S.forEach(s => { s.m = Math.max(0.2, Math.round((s.m == null ? 1 : s.m) * k * 10) / 10); });
 })();

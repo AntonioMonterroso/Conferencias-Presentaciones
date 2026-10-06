@@ -9,10 +9,10 @@ begin
   if n <> 2 then raise exception 'Se esperaban 2 decks y hay %', n; end if;
 
   select count(*) into n from public.mdpp_items i join public.mdpp_decks d on d.id = i.deck_id where d.slug = 'libro-partidos';
-  if n < 48 then raise exception 'Libro: se esperaban al menos 48 páginas y hay %', n; end if;
+  if n < 50 then raise exception 'Libro: se esperaban al menos 50 páginas y hay %', n; end if;
 
   select count(*) into n from public.mdpp_items i join public.mdpp_decks d on d.id = i.deck_id where d.slug = 'presentacion-partidos';
-  if n < 77 then raise exception 'Presentación: se esperaban al menos 77 diapositivas y hay %', n; end if;
+  if n < 89 then raise exception 'Presentación: se esperaban al menos 89 diapositivas y hay %', n; end if;
 
   select count(*) into n from public.mdpp_sections s join public.mdpp_decks d on d.id = s.deck_id where d.slug = 'presentacion-partidos';
   if n < 9 then raise exception 'Presentación: se esperaban 9 secciones y hay %', n; end if;
@@ -24,7 +24,7 @@ begin
   select count(*) into n from pg_policies where schemaname = 'public' and tablename like 'mdpp\_%';
   if n < 8 then raise exception 'Faltan políticas RLS (hay %)', n; end if;
 
-  raise notice 'MIGRACIÓN CORRECTA: decks=2, libro=48, presentación=77, RLS activa.';
+  raise notice 'MIGRACIÓN CORRECTA: decks=2, libro=50, presentación=89, RLS activa.';
 end $$;
 
 -- Resumen visible

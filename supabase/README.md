@@ -15,9 +15,13 @@ Cada cambio de contenido guarda la versión anterior en `mdpp_item_versions`.
 | 1 | `20261006_01_base.sql` | Funciones, `mdpp_decks`, `mdpp_sections` |
 | 2 | `20261006_02_items.sql` | `mdpp_items`, historial y trigger de versiones |
 | 3 | `20261006_03_security.sql` | Editores, RLS, políticas y permisos |
-| 4 | `20261006_04_seed_libro.sql` | 48 páginas del libro |
-| 5 | `20261006_05_seed_presentacion.sql` | 77 diapositivas |
+| 4 | `20261006_04_seed_libro.sql` | 50 páginas del libro |
+| 5 | `20261006_05_seed_presentacion.sql` | 89 diapositivas |
 | 6 | `20261006_06_verify.sql` | Verifica conteos y RLS; falla con mensaje claro |
+
+| 7 (solo si ya migró antes) | `20261006_07_agregar_inscripcion.sql` | Agrega la inscripción de un partido (12 diapositivas y 2 páginas), corrige textos y minutos de lo que usted no haya editado |
+
+**¿Ya ejecutó las fases 1 a 6 antes de este cambio?** Ejecute solo la fase 7. **¿Reinicia de cero?** Use `99_reset` + `00_completa`; ya incluye todo y no necesita la 7.
 
 Las semillas usan `on conflict do nothing`: volver a ejecutarlas **no pisa sus ediciones**.
 

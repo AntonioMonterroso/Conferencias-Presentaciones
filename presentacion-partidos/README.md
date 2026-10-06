@@ -1,6 +1,6 @@
 # Presentación · Contabilidad de un Partido Político
 
-77 diapositivas (≈ 90 min) con dos vistas sincronizadas.
+89 diapositivas (≈ 100 min, incluye la inscripción de un partido) con dos vistas sincronizadas.
 
 ## Cómo presentar (una laptop, dos ventanas)
 1. Sirva la carpeta por http (no por doble clic): `node ../../.claude/static-server-presentacion.js` o cualquier servidor estático / GitHub Pages.
@@ -21,7 +21,3 @@ El presentador ve la diapositiva actual, la siguiente, notas, reloj con ritmo (a
 
 ## Contenido editable en Supabase
 Ver `../supabase/README.md`. Con `enabled: false` en `config.js` todo funciona con el contenido incluido (sin internet).
-
-## Editor con inicio de sesión
-`editor.html` permite editar título, minutos, notas, HTML, clases y publicación de cada diapositiva y página del libro, con vista previa e historial de versiones.
-Entra con un usuario de Supabase Auth que esté en `mdpp_editors` (ver `../supabase/README.md`). La sesión vive solo en la pestaña.
